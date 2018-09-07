@@ -28,6 +28,8 @@ MongoClient.connect("mongodb://localhost:27017/ToDoApp", { useNewUrlParser: true
   //   console.log(result);
   // })
 
-  db.collection('Users').findOneAndDelete({_id: new ObjectID('5b8f4573501498063b897c5c')});
+  db.collection('Users').findOneAndDelete({_id: new ObjectID('5b8f4329da9db705f759f06b')}).then((result) => {
+    console.log(result);
+  });
   // client.close();
 })
