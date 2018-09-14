@@ -1,6 +1,7 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var {ObjectID} = require('mongodb');
+const lodash = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
+const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
 var {ToDo} = require('./models/todo');
@@ -63,15 +64,41 @@ app.delete('/todos/:id', (req, res) => {
 
   ToDo.findByIdAndDelete(id).then((todo) => {
     if(!todo){
-      console.log('a');
       return res.status(404).send();
     }
 
-    console.log('b');
     res.send({todo});
   }, (error) => {
-    console.log('c');
     res.status(400).send({ Error: 'Bad request' })
+  });
+});
+
+app.patch('/todos/:id', (req, res) => {
+  var id = req.params.id;
+  var body = {
+    text: req.body.text,
+    completed: req.body.completed
+  };
+  
+  if(!ObjectID.isValid(id)){
+    return res.status(404).send();
+  }
+
+  if(typeof(body.completed) === 'boolean' && body.completed){
+    body.completedAt = new Date().getTime();
+  } else {
+    body.completed = false;
+    body.completedAt = null;
+  }
+
+  ToDo.findByIdAndUpdate(id, { $set: body }, { new: true }).then((todo) => {
+    if(!todo){
+      return res.status(404).send();
+    }
+    console.log('c');
+    res.send({todo});
+  }, (error) => {
+    res.status(400).send();
   });
 });
 
