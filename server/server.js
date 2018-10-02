@@ -1,3 +1,5 @@
+const env = process.env.NODE_ENV;
+
 const lodash = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -5,7 +7,8 @@ const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
 var {ToDo} = require('./models/todo');
-var {User} = require('./models/user')
+var {User} = require('./models/user');
+var {authenticate} = require('./middleware/authenticate');
 
 var app = express();
 const port = process.env.PORT || 3000;
@@ -79,7 +82,7 @@ app.patch('/todos/:id', (req, res) => {
     text: req.body.text,
     completed: req.body.completed
   };
-  
+
   if(!ObjectID.isValid(id)){
     return res.status(404).send();
   }
@@ -95,11 +98,28 @@ app.patch('/todos/:id', (req, res) => {
     if(!todo){
       return res.status(404).send();
     }
-    console.log('c');
     res.send({todo});
   }, (error) => {
     res.status(400).send();
   });
+});
+
+app.post('/users', (req, res) => {
+  var {email, password} = req.body;
+  var body = {email, password};
+  var user = new User(body);
+
+  user.save().then(() => {
+    return user.generateAuthToken();
+  }).then((token) => {
+    res.header('x-auth', token).send(user);
+  }).catch((error) => {
+    res.status(400).send(error);
+  })
+});
+
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user);
 });
 
 app.listen(port, () => {
