@@ -35,6 +35,7 @@ var UserSchema = new mongoose.Schema({
     }]
 });
 
+// choose what to send when sending back a user as json
 UserSchema.methods.toJSON = function(){
   var user = this;
   var userObj = user.toObject();
@@ -42,6 +43,7 @@ UserSchema.methods.toJSON = function(){
   return _.pick(userObj, ['_id', 'email'])
 };
 
+// Instance methods
 UserSchema.methods.generateAuthToken = function(){
   var user = this;
   var access = 'auth';
@@ -51,9 +53,10 @@ UserSchema.methods.generateAuthToken = function(){
 
   return user.save().then(() => {
     return token;
-  })
+  });
 };
 
+// Model methods
 UserSchema.statics.findByToken = function(token){
   var User = this;
   var decoded;
@@ -71,6 +74,29 @@ UserSchema.statics.findByToken = function(token){
   })
 };
 
+UserSchema.statics.findByCredentials = function(email, password){
+  var User = this;
+
+  return User.findOne({email}).then((user) => {
+    if(!user){
+      return Promise.reject({error: 'No user was found.'});
+    }
+
+    return new Promise((resolve, reject) => {
+      bcrypt.compare(password, user.password, (err, res) => {
+        if(res){
+          resolve(user);
+        } else {
+          reject({errorBooty: "bootyError"});
+        }
+      });
+    });
+  }
+);
+};
+
+// Functions before saving a user
+// Checks if the password changes, so we could hash it
 UserSchema.pre('save', function(next){
   var user = this;
 
