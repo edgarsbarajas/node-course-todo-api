@@ -56,6 +56,18 @@ UserSchema.methods.generateAuthToken = function(){
   });
 };
 
+UserSchema.methods.removeToken = function(token){
+  var user = this;
+
+  return user.update({
+    $pull: {
+      tokens: {
+        token: token
+      }
+    }
+  });
+};
+
 // Model methods
 UserSchema.statics.findByToken = function(token){
   var User = this;
@@ -82,15 +94,13 @@ UserSchema.statics.findByCredentials = function(email, password){
       return Promise.reject({error: 'No user was found.'});
     }
 
-    return new Promise((resolve, reject) => {
-      bcrypt.compare(password, user.password, (err, res) => {
+      return bcrypt.compare(password, user.password).then((res) => {
         if(res){
-          resolve(user);
+          return user;
         } else {
-          reject({errorBooty: "bootyError"});
+          return Promise.reject({errorBooty: "bootyError"});
         }
-      });
-    });
+      })
   }
 );
 };
